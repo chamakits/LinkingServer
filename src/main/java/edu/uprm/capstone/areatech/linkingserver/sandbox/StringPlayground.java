@@ -18,8 +18,9 @@ public class StringPlayground
 			messageString.substring(messageString.indexOf(':')+1).substring(messageString.indexOf(':')+1);
 		System.out.println(messageString3);
 		
+		byte[] bytes = str.getBytes();
+		System.out.println(String.valueOf(bytes));
 
-		
 	}
 
 }

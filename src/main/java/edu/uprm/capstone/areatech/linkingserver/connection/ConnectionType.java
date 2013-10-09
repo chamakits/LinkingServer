@@ -17,4 +17,24 @@ public enum ConnectionType
 		return flag;
 	}
 	
+	public static ConnectionType determineClientType(String token)
+	{
+		if(token.length()>1 && token.length()>0)
+		{
+			return ConnectionType.ERRONEOUS;
+		}
+		else
+		{
+			char flagChar = token.toUpperCase().charAt(0);
+			for(ConnectionType t :ConnectionType.values())
+			{
+				if(t.getFlag()== flagChar)
+				{
+					return t;
+				}
+			}
+
+		}
+		return ConnectionType.ERRONEOUS;
+	}
 }

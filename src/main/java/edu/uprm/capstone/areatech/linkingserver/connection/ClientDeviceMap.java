@@ -2,10 +2,14 @@ package edu.uprm.capstone.areatech.linkingserver.connection;
 
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class ClientDeviceMap
 {
 	private static final ClientDeviceMap map;
+	private static final Logger LOGGER = LoggerFactory.getLogger(ClientDeviceMap.class);
 	
 	private final HashMap<String, ConnectionMessage> connectionMapping;
 //	private IoSession applicationSession;
@@ -37,22 +41,26 @@ public class ClientDeviceMap
 	
 	public void insertConnection(ConnectionMessage connectionMessage)
 	{
+		LOGGER.debug("Inserting:"+connectionMessage);
 		this.connectionMapping.put(connectionMessage.getIdentifyingNumber(), connectionMessage);
 	}
 	
 	public ConnectionMessage removeMessage(String identifyingString)
 	{
-		return this.connectionMapping.remove(identifyingString);
+		LOGGER.debug("Removing according to:"+identifyingString);
+		ConnectionMessage removed = this.connectionMapping.remove(identifyingString);
+		if(LOGGER.isDebugEnabled())
+		{
+			if(removed == null)
+			{
+				LOGGER.debug("Didn't find anything to remove.");
+			}
+			else
+			{
+				LOGGER.debug("Found and removed:"+removed.toString());
+			}
+		}
+		return removed;
 	}
-//	
-//	public void appendApplicationSession(IoSession session)
-//	{
-//		this.applicationSession = session;
-//	}
-//	
-//	public IoSession getApplicationSession()
-//	{
-//		return this.applicationSession;
-//	}
-
+	
 }

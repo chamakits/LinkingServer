@@ -2,34 +2,35 @@ package edu.uprm.capstone.areatech.linkingserver.connection.log.eventdata;
 
 import java.util.Calendar;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import edu.uprm.capstone.areatech.linkingserver.connection.log.EventLogParser;
 
-//TODO this seems shady and horrible, too much stuff in one object.  I should abstract out acceleration info and weight info.
 public class EventLogBuilder extends EventLogParser
 {
-	//	private boolean finalized;
 	private Calendar calendar;
 	private LoggingEnums.EventType eventType;
 	private LoggingEnums.WaterSensorTrigger waterSensorTriggerInfo;
 	private AccelerationVector accelerationVector;
 	private WeightContainer weightContainer;
-	private int revolutionTime;
+	private int tachometerValue;
+	
+	final static Logger LOGGER = LoggerFactory.getLogger(EventLogBuilder.class);
 
 
 	public EventLogBuilder()
 	{
-		//		this.finalized=false;
 		this.accelerationVector= new AccelerationVector();
 		this.weightContainer= new WeightContainer();
 	}
 	
-	//TODO Verify if I should use the boolean value check or not worth it.
 	public EventLog finalizeObject()
 	{
-		//		if(!finalized)
+		LOGGER.debug("Finalizing event log builder:"+this.weightContainer.weightString());
 		return new EventLog(calendar,eventType,waterSensorTriggerInfo, 
 				accelerationVector,weightContainer,
-				revolutionTime);
+				tachometerValue);
 	}
 
 	public EventLogBuilder setCalendar(Calendar calendar)
@@ -70,24 +71,30 @@ public class EventLogBuilder extends EventLogParser
 
 	public EventLogBuilder setWeightLeftArmrest(double weightLeftArmrest)
 	{
+		LOGGER.debug("Setting weight on left:"+weightLeftArmrest);
 		this.weightContainer.setWeightLeftArmrest(weightLeftArmrest);
+		LOGGER.debug("Has been set to:"+this.weightContainer.getWeightLeftArmrest());
 		return this;
 	}
 
 	public EventLogBuilder setWeightRightArmrest(double weightRightArmrest)
 	{
+		LOGGER.debug("Setting weight on right:"+weightRightArmrest);
 		this.weightContainer.setWeightRightArmrest(weightRightArmrest);
+		LOGGER.debug("Has been set to:"+this.weightContainer.getWeightRightArmrest());
 		return this;
 	}
 	public EventLogBuilder setWeightSeat(double weightSeat)
 	{
+		LOGGER.debug("Setting weight on seat:"+weightSeat);
 		this.weightContainer.setWeightSeat(weightSeat);
+		LOGGER.debug("Has been set to:"+this.weightContainer.getWeightSeat());
 		return this;
 	}
 
-	public EventLogBuilder setRevolutionTime(int revolutionTime)
+	public EventLogBuilder setTachometerValue(int tachometerValue)
 	{
-		this.revolutionTime = revolutionTime;
+		this.tachometerValue = tachometerValue;
 		return this;
 	}
 

@@ -34,14 +34,22 @@ public class LoggingEnums
 	
 	public enum EventType
 	{
+		//ENUM('water','tachometer','weight','impact')
 		
-		IMPACT(1), WEIGHT(2), WATER(3), TACHOMETER(4), ERRONEOUS(99);
+		IMPACT(1,"impact"), WEIGHT(2,"weight"), WATER(4,"water"), TACHOMETER(8,"tachometer"), ERRONEOUS(99,"impact");
 		
 		private int byteNumber;
+		private String name;
 		
-		EventType(int byteNumber)
+		EventType(int byteNumber,String name)
 		{
 			this.byteNumber=byteNumber;
+			this.name = name;
+		}
+		
+		public String getName()
+		{
+			return name;
 		}
 		
 		public int getEventNumber()
@@ -64,7 +72,7 @@ public class LoggingEnums
 	
 	public enum WaterSensorTrigger
 	{
-		SENSOR_ONE(1), SENSOR_TWO(2), BOTH(3), NONE(0), ERRONEOUS(99);
+		SENSOR_LEFT(4), SENSOR_RIGHT(2), BOTH(8), NONE(1), ERRONEOUS(99);
 		
 		private int byteNumber;
 		

@@ -12,7 +12,7 @@ public class SimpleTestDevice
 	
 	public static void main(String[] args) throws UnknownHostException, IOException
 	{
-		Socket client = new Socket("localhost",9123);
+		Socket client = new Socket("localhost",6189);
 
 		BufferedReader reader = new BufferedReader
 		(new InputStreamReader(client.getInputStream()));

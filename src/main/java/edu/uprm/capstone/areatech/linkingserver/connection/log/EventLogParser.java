@@ -4,16 +4,15 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.mina.proxy.utils.ByteUtilities;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import edu.uprm.capstone.areatech.linkingserver.connection.log.eventdata.AccelerationVector;
+import utils.UnitConverter;
 import edu.uprm.capstone.areatech.linkingserver.connection.log.eventdata.EventLog;
 import edu.uprm.capstone.areatech.linkingserver.connection.log.eventdata.EventLogBuilder;
-import edu.uprm.capstone.areatech.linkingserver.connection.log.eventdata.LoggingEnums;
 import edu.uprm.capstone.areatech.linkingserver.utilities.Converter;
-/*
- * TODO There are alot of subarray calls here, that may slow things down.  If the application is too slow, look into
- * doing this without subarray, just taking the index at a certain position.
- */
+
 public class EventLogParser
 {
 	private static final int BASE_TEN = 10;
@@ -23,6 +22,8 @@ public class EventLogParser
 	private static final int MOST_SIGNIFICANT_HALF_BYTE_MASK = Converter.bitsToByte(4,5,6,7);
 
 	private static final String ERRONEOUS_BYTE_AMOUNT_MESSAGE = "The amount of bytes for %s required is %d, and %s were given.";
+	
+	final static Logger LOGGER = LoggerFactory.getLogger(EventLogParser.class);
 
 	private static int[] parseAsBCD(byte numberAsBCD)
 	{
@@ -56,7 +57,7 @@ public class EventLogParser
 	}
 
 	private static final int BYTES_FOR_ADC_CODE=2;
-	private static final double V_REF_HI = 3.6;
+	private static final double V_REF_HI = 3.3;
 	private static final double V_REF_LOW = 0;
 	private static final int BIT_AMOUNT = 10;
 	private static double adcCodeToVin(byte[] adc2bytes)
@@ -77,14 +78,20 @@ public class EventLogParser
 	}
 
 	private static final  int DATE_BYTE_AMOUNT = 6;
-	public static Calendar parseAsDate(byte[] dateBytes)
+	public static Calendar parseAsDate(byte[] dateBytes) throws IllegalArgumentException
 	{
+		if(LOGGER.isDebugEnabled())
+		{
+			LOGGER.debug("Parsing date from:"+Converter.bitString(dateBytes));
+		}
 		if(dateBytes.length!=DATE_BYTE_AMOUNT)
 		{
+			
 			//			throw new IllegalArgumentException("The amount of bytes for date should be " +DATE_BYTE_AMOUNT+ " bytes, and received "+dateBytes.length+" bytes.");
 			throw new IllegalArgumentException(String.format(ERRONEOUS_BYTE_AMOUNT_MESSAGE, "date", DATE_BYTE_AMOUNT, dateBytes.length));
 		}
 
+		
 		int month = 
 			EventLogParser.bcdIntsToInt(
 					EventLogParser.parseAsBCD(dateBytes[0]));
@@ -120,13 +127,39 @@ public class EventLogParser
 		}
 
 		int byteIndex=0;
-		eventLogBuilder.setAccelerationX(EventLogParser.adcCodeToVin(ArrayUtils.subarray(accelerationBytes, byteIndex, byteIndex+BYTES_FOR_ADC_CODE)));
+//		UnitConverter.adcToVoltage();
+//		despues voltageToWeight()
+		double currentVin; 
+		byte[] currentAdcBytes;
+		long currentAdcLong;
+		
+		currentAdcBytes=ArrayUtils.subarray(accelerationBytes, byteIndex, byteIndex+BYTES_FOR_ADC_CODE);
+//		currentAdcLong=;
+//		currentVin=EventLogParser.adcCodeToVin(currentAdcBytes);
+		currentAdcLong = Converter.unsignedByteArrayToLongReverse(currentAdcBytes);
+		currentVin=UnitConverter.adcToVoltage((int) currentAdcLong);
+		eventLogBuilder.setAccelerationX(voltageToAcceleration(currentVin));
 		byteIndex+=BYTES_FOR_ADC_CODE;
 
-		eventLogBuilder.setAccelerationY(EventLogParser.adcCodeToVin(ArrayUtils.subarray(accelerationBytes, byteIndex, byteIndex+BYTES_FOR_ADC_CODE)));
+		currentAdcBytes=ArrayUtils.subarray(accelerationBytes, byteIndex, byteIndex+BYTES_FOR_ADC_CODE);
+//		currentVin=EventLogParser.adcCodeToVin(currentAdcBytes);
+		currentAdcLong = Converter.unsignedByteArrayToLongReverse(currentAdcBytes);
+		currentVin=UnitConverter.adcToVoltage((int) currentAdcLong);
+		eventLogBuilder.setAccelerationY(voltageToAcceleration(currentVin));
 		byteIndex+=BYTES_FOR_ADC_CODE;
+		
+		currentAdcBytes=ArrayUtils.subarray(accelerationBytes, byteIndex, byteIndex+BYTES_FOR_ADC_CODE);
+//		currentVin=EventLogParser.adcCodeToVin(currentAdcBytes);
+		currentAdcLong = Converter.unsignedByteArrayToLongReverse(currentAdcBytes);
+		currentVin=UnitConverter.adcToVoltage((int) currentAdcLong);
+		eventLogBuilder.setAccelerationZ(voltageToAcceleration(currentVin));
 
-		return eventLogBuilder.setAccelerationZ(EventLogParser.adcCodeToVin(ArrayUtils.subarray(accelerationBytes, byteIndex, byteIndex+BYTES_FOR_ADC_CODE)));
+		return eventLogBuilder;
+	}
+	
+	private static double voltageToAcceleration(double vin)
+	{
+		return (vin - 1.59)/.38;
 	}
 
 	private static final int WEIGHT_BYTE_AMOUNT = 3*2;
@@ -138,20 +171,75 @@ public class EventLogParser
 		}
 
 		int byteIndex=0;
-		eventLogBuilder.setWeightLeftArmrest(EventLogParser.adcCodeToVin(ArrayUtils.subarray(weightBytes, byteIndex, byteIndex+BYTES_FOR_ADC_CODE)));
+		
+		
+		double currentVin; 
+		byte[] currentAdcBytes;
+		long currentAdcLong;
+		double currentWeight=0;
+		
+		currentAdcBytes=ArrayUtils.subarray(weightBytes, byteIndex, byteIndex+BYTES_FOR_ADC_CODE);
+		currentAdcLong = Converter.unsignedByteArrayToLongReverse(currentAdcBytes);
+		currentVin=UnitConverter.adcToVoltage((int) currentAdcLong);
+		LOGGER.debug("Setting for seat weight in vin:"+currentVin);
+		currentWeight=UnitConverter.voltageToWeight(currentVin);
+		LOGGER.debug("Converted to:"+currentWeight);
+		if(Double.isNaN(currentWeight) || Double.isInfinite(currentWeight))
+		{
+			System.out.println("Changing:"+currentWeight+" to 0.");
+			LOGGER.debug("Double needs changing:"+currentWeight);
+			currentWeight=0;
+		}
+		eventLogBuilder.setWeightSeat(currentWeight);
 		byteIndex+=BYTES_FOR_ADC_CODE;
 
-		eventLogBuilder.setWeightRightArmrest(EventLogParser.adcCodeToVin(ArrayUtils.subarray(weightBytes, byteIndex, byteIndex+BYTES_FOR_ADC_CODE)));
+		currentAdcBytes=ArrayUtils.subarray(weightBytes, byteIndex, byteIndex+BYTES_FOR_ADC_CODE);
+		currentAdcLong = Converter.unsignedByteArrayToLongReverse(currentAdcBytes);
+		currentVin=UnitConverter.adcToVoltage((int) currentAdcLong);
+		LOGGER.debug("Setting for right armrest weight in vin:"+currentVin);
+		//Because arms are more sensitive.
+		currentWeight=UnitConverter.voltageToWeight(currentVin)/10;
+		LOGGER.debug("Converted to:"+currentWeight);
+		if(Double.isNaN(currentWeight) || Double.isInfinite(currentWeight))
+		{
+			System.out.println("Changing:"+currentWeight+" to 0.");
+			LOGGER.debug("Double needs changing:"+currentWeight);
+			currentWeight=0;
+		}
+		eventLogBuilder.setWeightRightArmrest(currentWeight);
 		byteIndex+=BYTES_FOR_ADC_CODE;
+		
+		currentAdcBytes=ArrayUtils.subarray(weightBytes, byteIndex, byteIndex+BYTES_FOR_ADC_CODE);
+		currentAdcLong = Converter.unsignedByteArrayToLongReverse(currentAdcBytes);
+		currentVin=UnitConverter.adcToVoltage((int) currentAdcLong);
+		LOGGER.debug("Setting for left armrest weight in vin:"+currentVin);
+		//Because arms are more sensitive.
+		currentWeight=UnitConverter.voltageToWeight(currentVin)/10;
+		LOGGER.debug("Converted to:"+currentWeight);
+		if(Double.isNaN(currentWeight) || Double.isInfinite(currentWeight))
+		{
+			System.out.println("Changing:"+currentWeight+" to 0.");
+			LOGGER.debug("Double needs changing:"+currentWeight);
+			currentWeight=0;
+		}
+		eventLogBuilder.setWeightLeftArmrest(currentWeight);
 
-		return eventLogBuilder.setWeightSeat(EventLogParser.adcCodeToVin(ArrayUtils.subarray(weightBytes, byteIndex, byteIndex+BYTES_FOR_ADC_CODE)));
+		LOGGER.debug("Done parsing weight.");
+		
+		return eventLogBuilder;
 	}
 
-	private static final int BYTES_IN_LOG = 21;
-	public static EventLog parseLog(byte[] logBytes)
+	public static final int BYTES_IN_LOG = 22;
+	private static final int TACHOMETER_BYTE_AMOUNT = 2;
+	public static EventLog parseLog(byte[] logBytes) throws IllegalArgumentException
 	{
+				
+		ArrayUtils.reverse(logBytes);
+		logBytes=Converter.reverseBytes(logBytes);
+		
 		if(logBytes.length!=BYTES_IN_LOG)
 		{
+			LOGGER.debug("Log of lenght:"+logBytes.length+" instead of "+BYTES_IN_LOG);
 			//			throw new IllegalArgumentException("The amount of bytes for the log should be "+BYTES_IN_LOG+" and received "+logBytes.length+" bytes.");
 			throw new IllegalArgumentException(String.format(ERRONEOUS_BYTE_AMOUNT_MESSAGE, "log event", BYTES_IN_LOG, logBytes.length));
 		}
@@ -165,18 +253,23 @@ public class EventLogParser
 		eventLogBuilder.setEventType(logBytes[byteIndex]);
 		//		LoggingEnums.EventType eventType = LoggingEnums.EventType.getEvenType(logBytes[byteIndex]);
 		++byteIndex;
+		
+		eventLogBuilder.setTachometerValue((int) Converter.unsignedByteToLong(logBytes[byteIndex]));
+		byteIndex+=TACHOMETER_BYTE_AMOUNT;
+		
+		parseWeightIntoEventLogBuilder(ArrayUtils.subarray(logBytes,byteIndex,byteIndex+WEIGHT_BYTE_AMOUNT), eventLogBuilder);
+		byteIndex+=WEIGHT_BYTE_AMOUNT;
+		
+		parseAccelerationIntoEventLogBuilder(ArrayUtils.subarray(logBytes,byteIndex,byteIndex+ACCELERATION_BYTE_AMOUNT), eventLogBuilder);
+		byteIndex+=ACCELERATION_BYTE_AMOUNT;
 
+		
+		
+		
+		
 		eventLogBuilder.setWaterSensorTriggerInfo(logBytes[byteIndex]);
 		//		LoggingEnums.WaterSensorTrigger waterTrigger = LoggingEnums.WaterSensorTrigger.getWaterSensorTrigger(logBytes[byteIndex]);
 		++byteIndex;
-	
-		parseWeightIntoEventLogBuilder(ArrayUtils.subarray(logBytes,byteIndex,byteIndex+WEIGHT_BYTE_AMOUNT), eventLogBuilder);
-		byteIndex+=WEIGHT_BYTE_AMOUNT;
-
-		parseAccelerationIntoEventLogBuilder(ArrayUtils.subarray(logBytes,byteIndex,byteIndex+ACCELERATION_BYTE_AMOUNT), eventLogBuilder);
-		byteIndex+=ACCELERATION_BYTE_AMOUNT;
-		
-		eventLogBuilder.setRevolutionTime((int) Converter.unsignedByteToLong(logBytes[byteIndex]));
 		
 		return eventLogBuilder.finalizeObject();
 

@@ -13,7 +13,7 @@ public class SimpleTestClient
 	public static void main(String[] args) throws UnknownHostException, IOException, InterruptedException
 	{
 
-		Socket client = new Socket("localhost",9123);
+		Socket client = new Socket("localhost",6189);
 
 		BufferedReader reader = new BufferedReader
 		(new InputStreamReader(client.getInputStream()));
@@ -22,8 +22,10 @@ public class SimpleTestClient
 			new PrintWriter(client.getOutputStream(),true);
 
 		String str = "04:A:7877877024:RQT:NONE\0";
+		System.out.println("Will write:"+str);
 		writer.write(str);
 		writer.flush();
+		System.out.println("Wrote write:"+str);
 		char[] buff = new char[str.length()];
 		int totalRead = 0;
 		int read=0;
@@ -31,14 +33,16 @@ public class SimpleTestClient
 		String message ="";
 		while(totalRead<str.length())
 		{
-//			Thread.sleep(3000);
+			Thread.sleep(1000);
 			read = reader.read(buff);
 			for(int i =0; i < read ; ++i)
 			{
+				System.out.println("Read so far:"+message);
 				message+=buff[i];
 				buff[i]='\0';
 			}
 			totalRead+=read;
+			System.out.println("Read:"+totalRead);
 		}
 		System.out.println("RECEIVED="+message);
 		client.close();

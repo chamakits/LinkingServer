@@ -1,13 +1,16 @@
 package edu.uprm.capstone.areatech.linkingserver.connection;
 
+import java.util.StringTokenizer;
+
 import edu.uprm.capstone.areatech.linkingserver.utilities.NumberPadding;
 
 public class ConnectionMessage
 {	
 	private String identifyingNumber;
-	private String keyword;
+	private Keyword keyword;
 	private String data;
 	private ConnectionType type;
+	private boolean responded=false;
 	
 	public static final int DATA_DIGIT_AMOUNT= 2;
 	public static final int TYPE_SIZE=1;
@@ -18,15 +21,42 @@ public class ConnectionMessage
 	
 	public static final int MINIMUM_MESSAGE_SIZE=
 		DATA_DIGIT_AMOUNT+TYPE_SIZE+IDENTIFYING_NUMBER_SIZE+KEYWORD_SIZE+DIVIDERS_SIZE;
+	
+	public static ConnectionMessage connectionMessageFromString(String message)
+	{
+		StringTokenizer tokenizer = new StringTokenizer(message,":");
+		//Discard the size
+		tokenizer.nextToken();
+		String type = tokenizer.nextToken();
+		String identifyingNumber = tokenizer.nextToken();
+		String keyword = tokenizer.nextToken();
+		String data = tokenizer.nextToken();
+		
+		return new ConnectionMessage
+		(identifyingNumber, 
+				Keyword.determineKeyword(keyword), 
+				data, 
+				ConnectionType.determineClientType(type));
+	}
 
 	ConnectionMessage(String identifyingNumber,
-			String keyword, String data, ConnectionType type)
+			Keyword keyword, String data, ConnectionType type)
 	{
 		super();
 		this.identifyingNumber = identifyingNumber;
-		this.keyword = keyword;
+		this.keyword = (keyword);
 		this.data = data;
 		this.type = type;
+	}
+	
+	public boolean getResponded()
+	{
+		return this.responded;
+	}
+	
+	public void setResponded()
+	{
+		this.responded=true;
 	}
 	
 	public String getDataSize()
@@ -38,12 +68,21 @@ public class ConnectionMessage
 		return this.identifyingNumber;
 	}
 
-	public String getKeyword() {
+	public Keyword getKeyword() {
 		return this.keyword;
 	}
 
 	public String getData() {
 		return this.data;
+	}
+	
+	public void setData(String data)
+	{
+		if(data.length()>99)
+		{
+			data= data.substring(0,99);
+		}
+		this.data=data;
 	}
 	
 	public ConnectionType getType()
@@ -53,6 +92,7 @@ public class ConnectionMessage
 	
 	public String toString()
 	{
+		
 		return 	
 				this.getDataSize()+":"+
 				this.type.getFlag()+":"+

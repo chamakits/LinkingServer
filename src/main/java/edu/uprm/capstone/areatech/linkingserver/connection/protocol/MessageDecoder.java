@@ -6,13 +6,20 @@ import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.CumulativeProtocolDecoder;
 import org.apache.mina.filter.codec.ProtocolDecoderOutput;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import edu.uprm.capstone.areatech.linkingserver.connection.ConnectionMessage;
 import edu.uprm.capstone.areatech.linkingserver.connection.ConnectionMessageBuilder;
 import edu.uprm.capstone.areatech.linkingserver.connection.ConnectionType;
+import edu.uprm.capstone.areatech.linkingserver.connection.Keyword;
+import edu.uprm.capstone.areatech.linkingserver.connection.log.EventLogParser;
 import edu.uprm.capstone.areatech.linkingserver.utilities.Converter;
 
-public class MessageDecoder extends CumulativeProtocolDecoder {
+public class MessageDecoder extends CumulativeProtocolDecoder 
+{
+	final static Logger LOGGER = LoggerFactory.getLogger(MessageDecoder.class);
+	
 
 //	private int MAX_MESSAGE_SIZE=140;
 	@Override
@@ -30,11 +37,19 @@ public class MessageDecoder extends CumulativeProtocolDecoder {
 			buffer.mark();
 			byte[] dataSize = new byte[ConnectionMessage.DATA_DIGIT_AMOUNT];
 			buffer.get(dataSize, 0, ConnectionMessage.DATA_DIGIT_AMOUNT);
+			//TODO this is giving negative results.
 			int desiredBytes = 
 				(Converter.byteArrayIntStringToInt(dataSize)+ConnectionMessage.MINIMUM_MESSAGE_SIZE)
 				-ConnectionMessage.DATA_DIGIT_AMOUNT;
-			if(buffer.remaining() < desiredBytes)
+			if(desiredBytes<=0)
 			{
+				return false;
+			}
+			
+			String messageSoFar = new String(buffer.array());
+			LOGGER.debug("CurrentlyRecieved="+messageSoFar);
+			if(buffer.remaining() < desiredBytes)
+			{				
 				buffer.reset();
 				return false;
 			}
@@ -61,20 +76,21 @@ public class MessageDecoder extends CumulativeProtocolDecoder {
 				 * "04:A:7873335555:UPT:SOME"
 				 */
 				StringTokenizer tokenizer = new StringTokenizer(clientMessage,":");
-				ConnectionMessageBuilder builder= ConnectionMessageBuilder.createNewClientBuilder();
+				ConnectionMessageBuilder builder= ConnectionMessageBuilder.createNewConnectionMessageBuilder();
 
-				//TODO skip the temp string.
 				tempString=tokenizer.nextToken();
-				builder.setType(determineClientType(tempString));
+				builder.setType(ConnectionType.determineClientType(tempString));
 
 				tempString=tokenizer.nextToken();
 				builder.setIdentifyingNumber(tempString);
 
 				tempString=tokenizer.nextToken();
-				builder.setKeyword(tempString);
+				Keyword keyword=Keyword.determineKeyword(tempString);
+				builder.setKeyword(keyword);
 
+				//This could bring trouble.  It is nonallowed character now.
 				tempString=tokenizer.nextToken();
-				builder.setData(tempString);
+				builder.setData(tempString.replaceAll("`", ""));
 
 				ConnectionMessage clientConnection = builder.finalizeObject();
 				out.write(clientConnection);
@@ -83,27 +99,5 @@ public class MessageDecoder extends CumulativeProtocolDecoder {
 			}
 
 		}
-	}
-
-	private ConnectionType determineClientType(String token)
-	{
-//		ConnectionType type;
-		if(token.length()>1 && token.length()>0)
-		{
-			return ConnectionType.ERRONEOUS;
-		}
-		else
-		{
-			char flagChar = token.toUpperCase().charAt(0);
-			for(ConnectionType t :ConnectionType.values())
-			{
-				if(t.getFlag()== flagChar)
-				{
-					return t;
-				}
-			}
-
-		}
-		return ConnectionType.ERRONEOUS;
 	}
 }

@@ -12,9 +12,12 @@ public class SmartTestConnection
 	
 	public static void main(String[] args) throws UnknownHostException, IOException 
 	{
-		final String str= args[0];
-		final String host = args[1];
-		int port = Integer.valueOf(args[2]);
+//		final String str= args[0];
+//		final String host = args[1];
+//		int port = Integer.valueOf(args[2]);
+		String str = "04:D:7877877024:RQT:NONE\0";
+		String host = "localhost";
+		int port = 6189;
 		
 		System.out.println("DEBUG:SENDING="+str+"\nDEBUG:TO="+host+"\nDEBUG:AT="+port);
 		

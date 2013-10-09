@@ -1,16 +1,21 @@
 package edu.uprm.capstone.areatech.linkingserver.connection;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ConnectionMessageBuilder
 {
-	private String identifyingNumber;
-	private String keyword;
-	private String data;
-	private ConnectionType type;
+	private String identifyingNumber="0000000";
+//	private String keyword="ERR";
+	private Keyword keyword=Keyword.ERRONEOUS;
+	private String data="";
+	private ConnectionType type=ConnectionType.ERRONEOUS;
 	
-	public static ConnectionMessageBuilder createNewClientBuilder()
+	final static Logger logger = LoggerFactory.getLogger(ConnectionMessageBuilder.class);
+	
+	public static ConnectionMessageBuilder createNewConnectionMessageBuilder()
 	{
 		return new ConnectionMessageBuilder();
-		
 	}
 	
 	public ConnectionMessageBuilder setIdentifyingNumber(String identifyingNumber)
@@ -19,7 +24,7 @@ public class ConnectionMessageBuilder
 		return this;
 	}
 	
-	public ConnectionMessageBuilder setKeyword(String keyword)
+	public ConnectionMessageBuilder setKeyword(Keyword keyword)
 	{
 		this.keyword=keyword;
 		return this;
@@ -39,7 +44,9 @@ public class ConnectionMessageBuilder
 	
 	public ConnectionMessage finalizeObject()
 	{
-		return new ConnectionMessage(identifyingNumber,keyword,data,type);
+		ConnectionMessage finalMessage = new ConnectionMessage(identifyingNumber,keyword,data,type);
+		logger.debug("Finalizing message:"+finalMessage);
+		return finalMessage;
 	}
 	
 	

@@ -6,6 +6,33 @@ public class Converter
 	private static final int BASE_TEN=10;
 	private static final int NEGATIVE_BIT_FLAG = 1<<7;
 	
+	
+	public static byte reverseByte(byte value)
+	{
+		byte byteReverse=0;
+		long bitHolder= 1;
+		for(int i = 0 ; i < Byte.SIZE; ++i)
+		{
+			if((value & bitHolder) >0)
+			{
+				byteReverse+=(1<<(Byte.SIZE-i-1));
+			}
+			
+			bitHolder<<=1;
+		}
+		return byteReverse;
+	}
+	
+	public static byte[] reverseBytes(byte[] values)
+	{
+		byte[] reversedBytes = new byte[values.length];
+		for(int i = 0; i< values.length; ++i)
+		{
+			reversedBytes[i]=reverseByte(values[i]);
+		}
+		return reversedBytes;
+	}
+	
 	public static byte bitsToByte(int... bitSetPositions)
 	{
 		byte total=0;
@@ -17,7 +44,6 @@ public class Converter
 		
 	}
 	
-	//TODO look into how to do this in a generic manner.
 	public static String bitString(byte value)
 	{
 		String str = "";
@@ -32,6 +58,16 @@ public class Converter
 			bitHolder<<=1;
 		}
 		return str;
+	}
+	
+	public static String bitString(byte[] values)
+	{
+		String string="";
+		for(byte abyte:values)
+		{
+			string+=bitString(abyte);
+		}
+		return string;
 	}
 	
 	public static String bitString(short value)
@@ -112,13 +148,23 @@ public class Converter
 		
 	}
 	
-	//Methods assumes how the bytes are organized.
-	//TODO verify this assumption.
 	public static long unsignedByteArrayToLong(byte[] byteArray)
 	{
 		long total = 0;
 //		for(byte currentByte : byteArray)
 		for(int i = byteArray.length-1 ; i >=0 ; --i)
+		{
+			total<<=Byte.SIZE;
+			total+=unsignedByteToLong(byteArray[i]);
+		}
+		return total;
+	}
+	
+	public static long unsignedByteArrayToLongReverse(byte[] byteArray)
+	{
+		long total = 0;
+//		for(byte currentByte : byteArray)
+		for(int i = 0; i <byteArray.length; ++i)
 		{
 			total<<=Byte.SIZE;
 			total+=unsignedByteToLong(byteArray[i]);

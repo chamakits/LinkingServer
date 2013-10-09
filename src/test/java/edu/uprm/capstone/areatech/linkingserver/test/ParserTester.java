@@ -9,7 +9,6 @@ import edu.uprm.capstone.areatech.linkingserver.connection.log.EventLogParser;
 public class ParserTester
 {
 
-	//TODO implement
 	@Test
 	public void testParseAsBCD()
 	{

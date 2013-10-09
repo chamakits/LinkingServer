@@ -2,8 +2,12 @@ package edu.uprm.capstone.areatech.linkingserver.connection.log.eventdata;
 
 import java.util.Calendar;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import edu.uprm.capstone.areatech.linkingserver.connection.log.eventdata.LoggingEnums.EventType;
 import edu.uprm.capstone.areatech.linkingserver.connection.log.eventdata.LoggingEnums.WaterSensorTrigger;
+import edu.uprm.capstone.areatech.linkingserver.db.DBInserter;
 
 
 public class EventLog
@@ -14,21 +18,24 @@ public class EventLog
 	private LoggingEnums.WaterSensorTrigger waterSensorTriggerInfo;
 	private AccelerationVector accelerationVector;
 	private WeightContainer weightContainer;
-	private int revolutionTime;
+	private int tachometerValue;
 	
-	//TODO CHANGE THIS, this constructor is just too big.  Put all possibly related data into smarter objects.
+	final static Logger LOGGER = LoggerFactory.getLogger(EventLog.class);
+	
 	public EventLog(Calendar calendar, EventType eventType,
 			WaterSensorTrigger waterSensorTriggerInfo,
 			AccelerationVector accelerationVector,
-			WeightContainer weightContainer, int revolutionTime)
+			WeightContainer weightContainer, int tachometerValue)
 	{
 		super();
 		this.calendar = calendar;
 		this.eventType = eventType;
 		this.waterSensorTriggerInfo = waterSensorTriggerInfo;
 		this.accelerationVector=accelerationVector;
+		
+		LOGGER.debug("Weight container: "+weightContainer.weightString());
 		this.weightContainer = weightContainer;
-		this.revolutionTime = revolutionTime;
+		this.tachometerValue = tachometerValue;
 	}
 
 	public Calendar getCalendar()
@@ -63,29 +70,32 @@ public class EventLog
 
 	public double getWeightLeftArmrest()
 	{
+		LOGGER.debug("Left Armrest in event:"+this.weightContainer.getWeightLeftArmrest());
 		return this.weightContainer.getWeightLeftArmrest();
 	}
 	
 	public double getWeightRightArmrest()
 	{
+		LOGGER.debug("Right Armrest in event:"+this.weightContainer.getWeightRightArmrest());
 		return this.weightContainer.getWeightRightArmrest();
 	}
 	
 	public double getWeightSeat()
 	{
+		LOGGER.debug("Seat Armrest in event:"+this.weightContainer.getWeightSeat());
 		return this.weightContainer.getWeightSeat();
 	}
 
-	public int getRevolutionTime()
+	public int getTachometerValue()
 	{
-		return revolutionTime;
+		return tachometerValue;
 	}
 
 	@Override
 	public String toString()
 	{
 		return "EventLog [calendar:\n" + calendar + ", \neventType:\n" + eventType + ", \nwaterSensorTriggerInfo:\n" + waterSensorTriggerInfo + ", \naccelerationVector:\n" + accelerationVector
-				+ ", \nweightContainer:\n" + weightContainer + ", \nrevolutionTime:\n" + revolutionTime + "]";
+				+ ", \nweightContainer:\n" + weightContainer + ", \nrevolutionTime:\n" + tachometerValue + "]";
 	}
 		
 	

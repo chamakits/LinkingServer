@@ -59,6 +59,11 @@ public class WeightContainer
 	{
 		return "WeightContainer [weightLeftArmrest=" + weightLeftArmrest + ", weightRightArmrest=" + weightRightArmrest + ", weightSeat=" + weightSeat + "]";
 	}
+	
+	public String weightString()
+	{
+		return "weightLeftArmrest=" + weightLeftArmrest + ", weightRightArmrest=" + weightRightArmrest + ", weightSeat=" + weightSeat;
+	}
 
 	
 	
