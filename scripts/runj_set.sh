@@ -1,4 +1,4 @@
-CURRVER='1.2'
+CURRVER='1.3'
 export CURRVER
 echo CURRVER
 
